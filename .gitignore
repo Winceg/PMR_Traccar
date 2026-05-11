@@ -12,3 +12,6 @@ out
 build
 .vscode
 bin
+conf/
+logs/
+data/
