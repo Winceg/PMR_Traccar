@@ -55,8 +55,7 @@ public final class Hashing {
         }
     }
 
-    private Hashing() {
-    }
+    private Hashing() {}
 
     private static byte[] function(char[] password, byte[] salt) {
         try {

@@ -28,7 +28,8 @@ import org.traccar.storage.query.Request;
 import jakarta.inject.Inject;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.stream.Stream;
 import javax.xml.stream.XMLOutputFactory;
@@ -36,6 +37,9 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 public class KmlExportProvider {
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
 
     private final Storage storage;
 
@@ -54,8 +58,6 @@ public class KmlExportProvider {
         Geofence geofence = geofenceId == 0 ? null : storage.getObject(Geofence.class, new Request(
                 new Columns.All(), new Condition.Equals("id", geofenceId)));
 
-        var dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-
         XMLStreamWriter writer = XMLOutputFactory.newFactory()
                 .createXMLStreamWriter(outputStream, StandardCharsets.UTF_8.name());
 
@@ -68,7 +70,7 @@ public class KmlExportProvider {
         writer.writeEndElement();
         writer.writeStartElement("Placemark");
         writer.writeStartElement("name");
-        writer.writeCharacters(dateFormat.format(from) + " - " + dateFormat.format(to));
+        writer.writeCharacters(DATE_FORMAT.format(from.toInstant()) + " - " + DATE_FORMAT.format(to.toInstant()));
         writer.writeEndElement();
         writer.writeStartElement("LineString");
         writer.writeStartElement("extrude");

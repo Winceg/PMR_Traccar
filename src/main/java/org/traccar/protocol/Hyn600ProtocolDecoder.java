@@ -39,11 +39,36 @@ public class Hyn600ProtocolDecoder extends BaseProtocolDecoder {
         super(protocol);
     }
 
+    private String decodeAlarm(int type, int state) {
+        return switch (type) {
+            case 3 -> state == 1 ? Position.ALARM_LOW_BATTERY : null;
+            case 7 -> Position.ALARM_ACCIDENT;
+            case 14 -> switch (state) {
+                case 1 -> Position.ALARM_POWER_CUT;
+                case 2 -> Position.ALARM_POWER_RESTORED;
+                case 3 -> Position.ALARM_LOW_POWER;
+                default -> null;
+            };
+            case 15 -> Position.ALARM_TOW;
+            case 16, 41 -> Position.ALARM_OVERSPEED;
+            case 19 -> switch (state) {
+                case 1 -> Position.ALARM_BRAKING;
+                case 2 -> Position.ALARM_ACCELERATION;
+                case 3 -> Position.ALARM_CORNERING;
+                default -> null;
+            };
+            case 21, 40 -> BitUtil.check(state, 0) ? Position.ALARM_GEOFENCE_ENTER : Position.ALARM_GEOFENCE_EXIT;
+            case 32 -> Position.ALARM_JAMMING;
+            case 33 -> Position.ALARM_TAMPERING;
+            default -> null;
+        };
+    }
+
     private List<Position> decodeReport(DeviceSession deviceSession, ByteBuf buf) {
 
         buf.readUnsignedShort(); // protocol version
-        buf.readUnsignedByte(); // event type
-        buf.readUnsignedByte(); // event state
+        int alarmType = buf.readUnsignedByte();
+        int alarmState = buf.readUnsignedByte();
         long mask = buf.readUnsignedInt();
 
         if (BitUtil.check(mask, 0)) {
@@ -99,7 +124,7 @@ public class Hyn600ProtocolDecoder extends BaseProtocolDecoder {
                             .setHour(buf.readUnsignedByte())
                             .setMinute(buf.readUnsignedByte())
                             .setSecond(buf.readUnsignedByte());
-                    position.setFixTime(dateBuilder.getDate());
+                    position.setTime(dateBuilder.getDate());
                 }
                 if (BitUtil.check(locationMask, 8)) {
                     int satelliteMask = buf.readUnsignedByte();
@@ -128,6 +153,7 @@ public class Hyn600ProtocolDecoder extends BaseProtocolDecoder {
         }
 
         Position position = positions.getLast();
+        position.addAlarm(decodeAlarm(alarmType, alarmState));
 
         if (BitUtil.check(mask, 2)) {
             position.set(Position.KEY_BATTERY, battery);
@@ -213,7 +239,7 @@ public class Hyn600ProtocolDecoder extends BaseProtocolDecoder {
             if (BitUtil.check(eventMask, 11)) {
                 buf.skipBytes(9);
             }
-            if (BitUtil.check(eventMask, 11)) {
+            if (BitUtil.check(eventMask, 12)) {
                 buf.skipBytes(8);
             }
         }

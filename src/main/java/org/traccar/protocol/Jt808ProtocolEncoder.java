@@ -30,11 +30,15 @@ import org.traccar.model.Command;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 public class Jt808ProtocolEncoder extends BaseProtocolEncoder {
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter
+            .ofPattern("yyMMddHHmmss").withZone(ZoneId.systemDefault());
 
     public Jt808ProtocolEncoder(Protocol protocol) {
         super(protocol);
@@ -66,12 +70,17 @@ public class Jt808ProtocolEncoder extends BaseProtocolEncoder {
                         data.writeCharSequence(command.getString(Command.KEY_DATA), StandardCharsets.US_ASCII);
                         return decoder.formatMessage(
                                 Jt808ProtocolDecoder.MSG_CONFIGURATION_PARAMETERS, id, false, data);
-                    } else if ("BSJ".equals(model)) {
+                    } else if (model != null && Set.of("BSJ", "C5", "C5L").contains(model)) {
                         data.writeByte(1); // flag
                         var charset = Charset.isSupported("GBK") ? Charset.forName("GBK") : StandardCharsets.US_ASCII;
                         data.writeCharSequence(command.getString(Command.KEY_DATA), charset);
                         return decoder.formatMessage(
                                 Jt808ProtocolDecoder.MSG_SEND_TEXT_MESSAGE, id, false, data);
+                    } else if (model != null && model.startsWith("JC")) {
+                        data.writeByte(0xF0); // online command
+                        data.writeCharSequence(command.getString(Command.KEY_DATA), StandardCharsets.US_ASCII);
+                        return decoder.formatMessage(
+                                Jt808ProtocolDecoder.MSG_TRANSPARENT_DOWNLINK, id, false, data);
                     } else {
                         return Unpooled.wrappedBuffer(DataConverter.parseHex(command.getString(Command.KEY_DATA)));
                     }
@@ -103,8 +112,7 @@ public class Jt808ProtocolEncoder extends BaseProtocolEncoder {
                 case Command.TYPE_ENGINE_RESUME:
                     if (alternative) {
                         data.writeByte(command.getType().equals(Command.TYPE_ENGINE_STOP) ? 0x01 : 0x00);
-                        data.writeBytes(DataConverter.parseHex(
-                                new SimpleDateFormat("yyMMddHHmmss").format(new Date())));
+                        data.writeBytes(DataConverter.parseHex(DATE_FORMAT.format(Instant.now())));
                         return decoder.formatMessage(
                                 Jt808ProtocolDecoder.MSG_OIL_CONTROL, id, false, data);
                     } else {

@@ -183,8 +183,7 @@ public class Xexun3ProtocolDecoder extends BaseProtocolDecoder {
                         position.set(Position.KEY_FUEL_LEVEL, fuel);
                     }
                 }
-                default -> {
-                }
+                default -> {}
             }
 
             buf.readerIndex(subEnd);

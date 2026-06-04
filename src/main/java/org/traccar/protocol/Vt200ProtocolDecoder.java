@@ -40,7 +40,7 @@ public class Vt200ProtocolDecoder extends BaseProtocolDecoder {
     private static double decodeCoordinate(int value) {
         int degrees = value / 1000000;
         int minutes = value % 1000000;
-        return degrees + minutes * 0.0001 / 60;
+        return degrees + minutes / 10000.0 / 60;
     }
 
     protected Date decodeDate(ByteBuf buf) {

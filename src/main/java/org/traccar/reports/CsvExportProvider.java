@@ -30,7 +30,7 @@ import org.traccar.storage.query.Request;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +39,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CsvExportProvider {
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final Storage storage;
     private final PermissionsService permissionsService;
@@ -68,8 +70,7 @@ public class CsvExportProvider {
         var server = permissionsService.getServer();
         var user = permissionsService.getUser(userId);
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        dateFormat.setTimeZone(UserUtil.getTimezone(server, user));
+        DateTimeFormatter dateFormat = DATE_FORMAT.withZone(UserUtil.getTimezone(server, user).toZoneId());
 
         Geofence geofence = geofenceId == 0 ? null : storage.getObject(Geofence.class, new Request(
                 new Columns.All(), new Condition.Equals("id", geofenceId)));
@@ -89,9 +90,9 @@ public class CsvExportProvider {
         properties.put("id", Position::getId);
         properties.put("deviceId", Position::getDeviceId);
         properties.put("protocol", Position::getProtocol);
-        properties.put("serverTime", position -> dateFormat.format(position.getServerTime()));
-        properties.put("deviceTime", position -> dateFormat.format(position.getDeviceTime()));
-        properties.put("fixTime", position -> dateFormat.format(position.getFixTime()));
+        properties.put("serverTime", position -> dateFormat.format(position.getServerTime().toInstant()));
+        properties.put("deviceTime", position -> dateFormat.format(position.getDeviceTime().toInstant()));
+        properties.put("fixTime", position -> dateFormat.format(position.getFixTime().toInstant()));
         properties.put("valid", Position::getValid);
         properties.put("latitude", Position::getLatitude);
         properties.put("longitude", Position::getLongitude);

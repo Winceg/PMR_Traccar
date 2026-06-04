@@ -19,9 +19,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import org.traccar.BaseFrameDecoder;
+import org.traccar.BaseProtocol;
 import org.traccar.helper.BitUtil;
 
 public class Jt1078FrameDecoder extends BaseFrameDecoder {
+
+    public Jt1078FrameDecoder() {
+        super(BaseProtocol.MAX_FRAME_LENGTH_LARGE);
+    }
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ByteBuf buf) throws Exception {
