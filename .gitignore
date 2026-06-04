@@ -16,3 +16,4 @@ conf/
 logs/
 data/
 setup/
+deploy.sh
