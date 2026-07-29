@@ -39,7 +39,12 @@ RETENTION_DAYS=360   # Traccar's DB is mostly GPS position history and can
                       # grow much faster than Portal/Mgmt Web's — lower this
                       # if local disk or kDrive space becomes a concern.
 LOG="$REPO_DIR/backup/kdrive-backup.log"
-RCLONE_CONFIG="$HOME/.config/rclone/rclone.conf"
+RCLONE_CONFIG="/root/.config/rclone/rclone.conf"   # hardcoded: plain `sudo`
+                                                     # doesn't reset $HOME to
+                                                     # /root, so relying on
+                                                     # $HOME here silently
+                                                     # pointed at the wrong
+                                                     # user's config
 DATE="$(date +%Y-%m-%d)"
 
 if [ "$(id -u)" -ne 0 ]; then
