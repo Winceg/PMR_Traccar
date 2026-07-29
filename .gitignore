@@ -16,3 +16,5 @@ conf/
 logs/
 data/
 setup/
+backup/dumps/
+backup/*.log
